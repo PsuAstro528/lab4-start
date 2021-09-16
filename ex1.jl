@@ -124,26 +124,11 @@ display_msg_if_fail(check_type_isa(:response_1b,response_1b,Markdown.MD))
 # ╔═╡ 7047987f-0b45-4224-8e41-fb7953ba3e6d
 md"**Nelder Mead**"
 
-# ╔═╡ b6f54005-2d6c-4629-b8f8-49ee7117d2ba
-if !ismissing(response_1b)
-	@benchmark optimize($gaussian_target_2d,$randn(2),NelderMead()) samples=100
-end
-
 # ╔═╡ 0cb98deb-8807-406f-993d-17ddeb0ff686
 md"**Gradient Descent**"
 
-# ╔═╡ 8dfc25fc-109d-4026-ac1c-3182d8ac1f81
-if !ismissing(response_1b)
-	@benchmark optimize($gaussian_target_2d,$randn(2),GradientDescent()) samples=100
-end
-
 # ╔═╡ c6b4377a-5fff-4e8b-a96f-df971a4d74f6
 md"**BFGS**"
-
-# ╔═╡ 4c4649cb-8f73-41cb-b7f9-e48f540fda7e
-if !ismissing(response_1b)
-	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS()) samples=100
-end
 
 # ╔═╡ 2b4188b3-8a1c-44a2-acdd-e8a0949e2659
 md"""
@@ -173,18 +158,8 @@ Often, the computational cost to compute the gradient is only slightly more than
 # ╔═╡ e2ba5402-9be8-4bfe-acfc-5acf4ac01ace
 md"**Evaluate function only**"
 
-# ╔═╡ b18277bd-e23c-4184-bc10-5a47d83a3df5
-if !ismissing(response_1b)
-	@benchmark gaussian_target_2d($init_guess_gauss_2d)  samples=20
-end
-
 # ╔═╡ a585d799-4c14-45e3-8250-d9a19df075b3
 md"**Evaluate gradient only**"
-
-# ╔═╡ 8aa054de-403b-47e8-9f84-73e2ca2fa4e3
-if !ismissing(response_1b)
-	@benchmark ForwardDiff.gradient($gaussian_target_2d,$init_guess_gauss_2d)  samples=20
-end
 
 # ╔═╡ 54319c3e-fed4-4184-81ce-767f9a527c1b
 md"""
@@ -193,18 +168,6 @@ There are many subexpressions that are shared across the function and gradient e
 
 # ╔═╡ b3d5cf28-64bb-4e62-b72b-e6747a668f37
 md"**Evaluate function and gradient with Forward Diff**"
-
-# ╔═╡ e5140102-36e7-450f-ac6d-7f32c0668b98
-begin
-	cost_one_eval = @belapsed gaussian_target_2d(init_guess_gauss_2d) samples=20
-	cost_one_eval = (1+2)*cost_one_eval
-	cost_num_grad_str = @sprintf "%1.3g" cost_one_eval
-end
-
-# ╔═╡ 9b02c64d-bed9-4d4c-bdd8-67648dd7bfae
-md"""
-If you're evaluating the gradient, then the incremental cost to evaluate the function itself is very small.  For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
-"""
 
 # ╔═╡ 61704586-c69f-473f-bfed-cff98767b729
 md"""
@@ -217,17 +180,6 @@ md"""It's better to use the API (as opposed to accessing the internal variables 
 
 # ╔═╡ 980e8ae8-7b6c-43cd-a217-b9de54731b6f
 md"**Evaluate function and gradient with Reverse Diff**"
-
-# ╔═╡ 64c63760-f2d4-482a-8343-7a8d982b0844
-@test DiffResults.value(result_rev2) ≈ DiffResults.value(result)
-
-# ╔═╡ cf37e7b2-6b3e-44aa-9665-723019f6a95c
-@test all(DiffResults.gradient(result_rev2).≈ DiffResults.gradient(result))
-
-# ╔═╡ f318374c-1938-4efd-b540-f3d2afae2c70
-md"""
-For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
-"""
 
 # ╔═╡ f9ce690a-fab6-40fd-b4fc-6788840dbe30
 protip(md"""While forward-mode autodifferentiation is relatively straight-forward, there are various strategies for reverse-mode autodifferentiation, so there are multiple packages that make different design choices.  Typically, forward-mode is best for functions with few input parameters.  Reverse-mode is often more efficient functions with many inputs and more inputs than outputs.  The latter case is common in some machine learning applications.
@@ -245,11 +197,6 @@ The number of function and gradient evaluations is probably the same as when we 
 
 # ╔═╡ 286f9794-d139-4058-9fc2-8588d9040f3f
 md"**BFGS w/ autodiff**"
-
-# ╔═╡ 2cc9be0e-4b91-4d6a-87da-ad70317c4742
-if run_benchmarks
-	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS(),autodiff=:forward) samples=20
-end
 
 # ╔═╡ f33f8dc4-df49-496b-9da9-503f4beaf1c8
 md"""
@@ -315,9 +262,6 @@ end;
 
 # ╔═╡ 0f06886f-8eb3-4828-b5dd-b84a4749519b
 md"As before, it'll be helpful to be able to compare our results to the location of the true minimum."
-
-# ╔═╡ 7d188cda-70c8-44b7-9773-911e5f92bb35
-true_min_banana_2d = compute_loc_min_banana_2d(banana_a,banana_b, min_prewarp_banana_2d)
 
 # ╔═╡ 66e079a4-e14e-4700-adfa-51a05a4cd07e
 md"""
@@ -428,16 +372,6 @@ begin
 	init_guess_banana_nd = 5.0.*randn(banana_nd);
 end
 
-# ╔═╡ 73d84cba-c5a5-40fd-bc99-15a00570d413
-function calc_min_banana_nd(d::Integer)
-	@assert d>=2
-	true_min_banana_nd = repeat(true_min_banana_2d,floor(Int,d//2))
-	if d-length(true_min_banana_nd) == 1
-	   true_min_banana_nd = vcat(true_min_banana_nd,0.0)
-	end
-	true_min_banana_nd
-end;
-
 # ╔═╡ 997042fa-803d-49c4-9ed6-b6e0809d6cf8
 md"""
 1g.  Try increasing the number of dimensions to 10-20.  How does the accuracy compare?   What could you change in order to improve the accuracy?  What are the implications for your choice of algorithm for problems with many model parameters? 
@@ -543,28 +477,6 @@ if run_benchmarks
 	title!(plt,"Benchmarking Algorithms for Warped Gaussian target")
 end
 
-# ╔═╡ ea622981-ebca-4407-826e-c7141562e76d
-if run_benchmarks # Evaluate accuracy of minima found 
-	local nd_list = dimen_to_benchmark_banana
-	local ref = map(d->calc_min_banana_nd(d), nd_list )
-	dist_banana_nm = map(i-> sum( (results_banana_nm_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-	dist_banana_gd = map(i-> sum( (results_banana_gd_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-	dist_banana_bfgs = map(i-> sum( (results_banana_bfgs_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-	dist_banana_bfgs_ad = map(i-> sum( (results_banana_bfgs_ad_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-end;
-
-# ╔═╡ 140c83c4-bbe8-4ffe-b272-5edf10511456
-if run_benchmarks
-	local plt = plot(yscale=:log10, legend=:right)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_nm, label="Nelder Mean (Gradient-free)",color=:blue)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_gd, label="Gradient Descent",color=:purple)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs, label="BFGS, Numerical Gradients",color=:green)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs_ad, label="BFGS, Auto-Diff Gradients",color=:red)
-	xlabel!("Number of dimensions")
-	ylabel!("Distance to true minimum")
-	title!(plt,"Accuracy of Algorithms for Banana target")
-end
-
 # ╔═╡ 1f122def-f9fb-41df-8292-c1b0c93cfb4d
 md"1i.  How did the results compare to your predictions?"  
 
@@ -600,8 +512,6 @@ md"""
 # ╔═╡ 40f3c16f-6fa2-4e14-9e0e-c3f608d3f564
 begin
 	struct GaussianTarget
-		#μ_true::Vector{Float64}
-		#Σ_true::AbstractPDMat{Float64}
 		dist::FullNormal
 	end
 	
@@ -683,8 +593,33 @@ result_gauss_2d_bfgs.minimizer .- mean(gaussian_target_2d)
 # ╔═╡ b075963b-79ed-49f5-8bc8-616196de8b36
 result_gauss_2d_bfgs.minimum .- gaussian_target_2d(mean(gaussian_target_2d))
 
+# ╔═╡ b6f54005-2d6c-4629-b8f8-49ee7117d2ba
+if !ismissing(response_1b)
+	@benchmark optimize($gaussian_target_2d,$randn(2),NelderMead()) samples=100
+end
+
+# ╔═╡ 8dfc25fc-109d-4026-ac1c-3182d8ac1f81
+if !ismissing(response_1b)
+	@benchmark optimize($gaussian_target_2d,$randn(2),GradientDescent()) samples=100
+end
+
+# ╔═╡ 4c4649cb-8f73-41cb-b7f9-e48f540fda7e
+if !ismissing(response_1b)
+	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS()) samples=100
+end
+
 # ╔═╡ dd3afd35-5508-48e8-b38d-a3342f32ba7c
 ForwardDiff.gradient(gaussian_target_2d,init_guess_gauss_2d)
+
+# ╔═╡ b18277bd-e23c-4184-bc10-5a47d83a3df5
+if !ismissing(response_1b)
+	@benchmark gaussian_target_2d($init_guess_gauss_2d)  samples=20
+end
+
+# ╔═╡ 8aa054de-403b-47e8-9f84-73e2ca2fa4e3
+if !ismissing(response_1b)
+	@benchmark ForwardDiff.gradient($gaussian_target_2d,$init_guess_gauss_2d)  samples=20
+end
 
 # ╔═╡ 756389e5-662b-4384-a94e-ed05c8c286f5
 begin 
@@ -701,14 +636,50 @@ if !ismissing(response_1b)
 	@benchmark ForwardDiff.gradient!($result_rev,$gaussian_target_2d,$init_guess_gauss_2d)  samples=20
 end
 
+# ╔═╡ e5140102-36e7-450f-ac6d-7f32c0668b98
+if @isdefined gaussian_target_2d
+	cost_one_eval = @belapsed gaussian_target_2d(init_guess_gauss_2d) samples=20
+	cost_one_eval = (1+2)*cost_one_eval
+	cost_num_grad_str = @sprintf "%1.3g" cost_one_eval
+end
+
+# ╔═╡ 9b02c64d-bed9-4d4c-bdd8-67648dd7bfae
+if @isdefined cost_num_grad_str
+	md"""
+If you're evaluating the gradient, then the incremental cost to evaluate the function itself is very small.  For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
+"""
+end
+
+# ╔═╡ f318374c-1938-4efd-b540-f3d2afae2c70
+if @isdefined cost_num_grad_str
+	md"""
+For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
+"""
+end
+
 # ╔═╡ cb9de107-7a33-4a59-8296-d373024e81b6
 if !ismissing(response_1b)
 	result_rev2 = DiffResults.GradientResult(init_guess_gauss_2d)
 	@benchmark ReverseDiff.gradient!($result_rev2,$gaussian_target_2d,$init_guess_gauss_2d)  samples=20
 end
 
+# ╔═╡ 64c63760-f2d4-482a-8343-7a8d982b0844
+if @isdefined result_rev2
+	@test DiffResults.value(result_rev2) ≈ DiffResults.value(result)
+end
+
+# ╔═╡ cf37e7b2-6b3e-44aa-9665-723019f6a95c
+if @isdefined result_rev2
+	@test all(DiffResults.gradient(result_rev2).≈ DiffResults.gradient(result))
+end
+
 # ╔═╡ 3db6d059-1995-4648-a7e5-eacb40131c8a
 result_gauss_2d_bfgs_ad = optimize(gaussian_target_2d,init_guess_gauss_2d,BFGS(),autodiff=:forward)
+
+# ╔═╡ 2cc9be0e-4b91-4d6a-87da-ad70317c4742
+if run_benchmarks
+	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS(),autodiff=:forward) samples=20
+end
 
 # ╔═╡ adcc2804-6cf9-43a9-8291-08671c64188c
 if run_benchmarks  # Code to compute benchmarks
@@ -780,6 +751,17 @@ function banana_2d(x::Vector)
 	-logpdf(dist,y)
 end
 
+# ╔═╡ 691dbb96-1348-4a63-aa2c-36c577a77f93
+"Compute location of location of minimum for 2D banana"
+function compute_loc_min_banana_2d(a, b, min_prewarp::Vector)
+	true_min_postwarp_banana_x = min_prewarp[1]*a 
+	true_min_postwarp_banana_y = (min_prewarp[2]-a*b*(min_prewarp[1]^2+a^2))/a
+	true_min_postwarp_banana_2d = [true_min_postwarp_banana_x, true_min_postwarp_banana_y]
+end;
+
+# ╔═╡ 7d188cda-70c8-44b7-9773-911e5f92bb35
+true_min_banana_2d = compute_loc_min_banana_2d(banana_a,banana_b, min_prewarp_banana_2d)
+
 # ╔═╡ f2209d29-1c49-499f-949a-85e680559e22
 let
 	n_plt = 400
@@ -794,13 +776,37 @@ let
 	title!("Gaussian warped into a 2-D Banana")
 end
 
-# ╔═╡ 691dbb96-1348-4a63-aa2c-36c577a77f93
-"Compute location of location of minimum for 2D banana"
-function compute_loc_min_banana_2d(a, b, min_prewarp::Vector)
-	true_min_postwarp_banana_x = min_prewarp[1]*a 
-	true_min_postwarp_banana_y = (min_prewarp[2]-a*b*(min_prewarp[1]^2+a^2))/a
-	true_min_postwarp_banana_2d = [true_min_postwarp_banana_x, true_min_postwarp_banana_y]
+# ╔═╡ 73d84cba-c5a5-40fd-bc99-15a00570d413
+function calc_min_banana_nd(d::Integer)
+	@assert d>=2
+	true_min_banana_nd = repeat(true_min_banana_2d,floor(Int,d//2))
+	if d-length(true_min_banana_nd) == 1
+	   true_min_banana_nd = vcat(true_min_banana_nd,0.0)
+	end
+	true_min_banana_nd
 end;
+
+# ╔═╡ ea622981-ebca-4407-826e-c7141562e76d
+if run_benchmarks # Evaluate accuracy of minima found 
+	local nd_list = dimen_to_benchmark_banana
+	local ref = map(d->calc_min_banana_nd(d), nd_list )
+	dist_banana_nm = map(i-> sum( (results_banana_nm_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+	dist_banana_gd = map(i-> sum( (results_banana_gd_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+	dist_banana_bfgs = map(i-> sum( (results_banana_bfgs_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+	dist_banana_bfgs_ad = map(i-> sum( (results_banana_bfgs_ad_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+end;
+
+# ╔═╡ 140c83c4-bbe8-4ffe-b272-5edf10511456
+if run_benchmarks
+	local plt = plot(yscale=:log10, legend=:right)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_nm, label="Nelder Mean (Gradient-free)",color=:blue)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_gd, label="Gradient Descent",color=:purple)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs, label="BFGS, Numerical Gradients",color=:green)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs_ad, label="BFGS, Auto-Diff Gradients",color=:red)
+	xlabel!("Number of dimensions")
+	ylabel!("Distance to true minimum")
+	title!(plt,"Accuracy of Algorithms for Banana target")
+end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1846,7 +1852,7 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─2046af3d-aea5-433c-8b70-4916a8b7ef1a
-# ╠═8b35ac88-aece-4f78-b0e7-0a03ff1fbe26
+# ╟─8b35ac88-aece-4f78-b0e7-0a03ff1fbe26
 # ╟─3daa9062-8c45-41fd-a52d-d042fd86d1b6
 # ╟─9463b61d-99e1-4542-828f-14d35f059ba8
 # ╟─c0f97de7-832d-46a0-b82d-a04c47bbafce
@@ -1905,7 +1911,7 @@ version = "0.9.1+5"
 # ╠═cb9de107-7a33-4a59-8296-d373024e81b6
 # ╠═64c63760-f2d4-482a-8343-7a8d982b0844
 # ╠═cf37e7b2-6b3e-44aa-9665-723019f6a95c
-# ╠═f318374c-1938-4efd-b540-f3d2afae2c70
+# ╟─f318374c-1938-4efd-b540-f3d2afae2c70
 # ╟─f9ce690a-fab6-40fd-b4fc-6788840dbe30
 # ╟─32801c51-156f-490d-b980-2d98e8f5be23
 # ╠═3db6d059-1995-4648-a7e5-eacb40131c8a
