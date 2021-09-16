@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.15.1
+# v0.16.0
 
 using Markdown
 using InteractiveUtils
@@ -380,7 +380,7 @@ param_guess_with_acc = merge(param_guess, (;a = 0.0) )
 md"""
 We're you're ready to start sampling from the new posterior, check the box below.
 
-Ready to sample from new posterior using your new model? $(@bind go_sample_posterior2 CheckBox(default=true))
+Ready to sample from new posterior using your new model? $(@bind go_sample_posterior2 CheckBox(default=false))
 """
 
 # ╔═╡ 13c56edd-3c1e-496e-8116-fb158dd0f133
@@ -876,7 +876,7 @@ if @isdefined chains_posterior2
 end
 
 # ╔═╡ 693cae36-613b-4c3d-b6a0-3284b1831520
-if  @isdefined chains_with_guess
+if  @isdefined chains_posterior2
 	draw_new_samples_from_posterior_with_acc
 	local plt = plot(legend=:none)
 	scatter!(plt,df[!,:bjd].-bjd_ref,df[!,:rv],yerr=df[!,:σ_rv])
@@ -896,7 +896,7 @@ if  @isdefined chains_with_guess
 end
 
 # ╔═╡ fe8f637d-3721-4a9f-9e6e-f6aee00b7f18
-if  @isdefined chains_with_guess
+if  @isdefined chains_posterior2
 	draw_new_samples_from_posterior_with_guess
 	local plt = standardize_histo ? plot(Normal(0,1),legend=:none, color=:black, lw=3) : plot() 
 	local resid = zeros(length(df.bjd),n_draws)
@@ -2766,7 +2766,7 @@ version = "0.9.1+5"
 # ╟─cd1ca1b3-a0ec-4d10-90a3-7648fe52f206
 # ╟─9d57a595-fad9-4263-baf4-33d4ac5209f7
 # ╟─4c05803d-3b8d-4c03-9c7a-3c589227a807
-# ╠═8a4ae52b-9cc6-478f-b836-62e59694949e
+# ╟─8a4ae52b-9cc6-478f-b836-62e59694949e
 # ╟─21fdeaff-0c91-481c-bd8e-1dba27e275a6
 # ╠═a4be55ab-3e8e-423c-b3bc-3f3b88c5d2b7
 # ╟─5efb1eac-c1fe-417f-828a-3cfb8978da40
