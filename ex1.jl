@@ -69,7 +69,7 @@ There are numerous optimization algorithms that are specialized for a wide varie
 
 # ╔═╡ b013cf33-c7a6-42ad-8842-aa631f86cace
 md"""
-The first algorithm we'll try is the [downhill simplex method](https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method) (sometimes referred o as the amoeba method or Nelder-Mead).  Below we call the `optimize` function, specifying the target function to be minimized, an initial guess (as a vector), and the algorithm to be used.  The `optimize` function will reture a structure that contains its estimate of the location of the minimum (the `minimizer`), the value of the function at that point (the `minimum`), and additional information such as how many function calls were used why the algorithm decided to stop its search.
+The first algorithm we'll try is the [downhill simplex method](https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method) (sometimes referred to as the amoeba method or Nelder-Mead).  Below we call the `optimize` function, specifying the target function to be minimized, an initial guess (as a vector), and the algorithm to be used.  The `optimize` function will return a structure that contains its estimate of the location of the minimum (the `minimizer`), the value of the function at that point (the `minimum`), and additional information such as how many function calls were used and why the algorithm decided to stop its search.
 """
 
 # ╔═╡ 5ef412aa-c13b-447f-9d0a-9c6b37e8b37a
@@ -145,7 +145,7 @@ display_msg_if_fail(check_type_isa(:response_1c,response_1a,Markdown.MD))
 md"""
 In the example above, the optimize function had to estimate the gradient of our target function numerically.  We could likely improve the performance by providing a function to compute the gradient explicitly.  Alternatively, we could make use of automatic differentiation (or "autodiff"), where we let the compiler do the work of computing derivatives for us.
 
-In this case, we have a simple target function and we could compute the gradient analytically ourselfes.  However, that would require human time and we'd have to be careful not to miss a minus sine or factor of 2.  Autodiff is a particularly powerful tool when the target function is more complex and computing gradients analytically would be impractical.  
+In this case, we have a simple target function and we could compute the gradient analytically ourselves.  However, that would require human time and we'd have to be careful not to miss a minus sign or factor of 2.  Autodiff is a particularly powerful tool when the target function is more complex and computing gradients analytically would be impractical.  
 
 There are several different strategies for performing automatic differentiation.  Which is more efficient depends on the problem.  For this lab, we'll use [Foward Accumulation](https://en.wikipedia.org/wiki/Automatic_differentiation#Forward_accumulation) which is implemented by Julia's [ForwardDiff package](https://github.com/JuliaDiff/ForwardDiff.jl).  For example, we can compute the gradient with
 """
@@ -169,40 +169,17 @@ There are many subexpressions that are shared across the function and gradient e
 # ╔═╡ b3d5cf28-64bb-4e62-b72b-e6747a668f37
 md"**Evaluate function and gradient with Forward Diff**"
 
-# ╔═╡ e5140102-36e7-450f-ac6d-7f32c0668b98
-begin
-	cost_one_eval = @belapsed gaussian_target_2d(init_guess_gauss_2d) samples=20
-	cost_one_eval = (1+2)*cost_one_eval
-	cost_num_grad_str = @sprintf "%1.3g" cost_one_eval
-end
-
-# ╔═╡ 9b02c64d-bed9-4d4c-bdd8-67648dd7bfae
-md"""
-If you're evaluating the gradient, then the incremental cost to evaluate the function itself is very small.  For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
-"""
-
 # ╔═╡ 61704586-c69f-473f-bfed-cff98767b729
 md"""
 The [DiffResults.jl](https://juliadiff.org/DiffResults.jl/stable/) package provides an *Application Programming Interface (API)* for retreiving the results of autodifferentiation packages.  For example,
 """
 
 # ╔═╡ f3cedf20-eda8-4bfe-a8fa-497e1cfe5dd4
-md"""It's better to use the API (as opposed to accessing the internal variables in the result of type `MutableDiffResult`), since the API is shared by other autodiff packages, such *Reverse-mode* autodiff packages like [ReveresDiff.jl](https://github.com/JuliaDiff/ReverseDiff.jl).    Thus, one can more easily try/swap out different autodiff enginges to see which works better for a particulare application. Let's compare thes two options. 
+md"""It's better to use the API (as opposed to accessing the internal variables in the result of type `MutableDiffResult`), since the API is shared by other autodiff packages, such as *Reverse-mode* autodiff packages like [ReveresDiff.jl](https://github.com/JuliaDiff/ReverseDiff.jl).    Thus, one can more easily try/swap out different autodiff engines to see which works better for a particular application. Let's compare these two options. 
 """
 
 # ╔═╡ 980e8ae8-7b6c-43cd-a217-b9de54731b6f
 md"**Evaluate function and gradient with Reverse Diff**"
-
-# ╔═╡ 64c63760-f2d4-482a-8343-7a8d982b0844
-@test DiffResults.value(result_rev2) ≈ DiffResults.value(result)
-
-# ╔═╡ cf37e7b2-6b3e-44aa-9665-723019f6a95c
-@test all(DiffResults.gradient(result_rev2).≈ DiffResults.gradient(result))
-
-# ╔═╡ f318374c-1938-4efd-b540-f3d2afae2c70
-md"""
-For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
-"""
 
 # ╔═╡ f9ce690a-fab6-40fd-b4fc-6788840dbe30
 protip(md"""While forward-mode autodifferentiation is relatively straight-forward, there are various strategies for reverse-mode autodifferentiation, so there are multiple packages that make different design choices.  Typically, forward-mode is best for functions with few input parameters.  Reverse-mode is often more efficient functions with many inputs and more inputs than outputs.  The latter case is common in some machine learning applications.
@@ -273,7 +250,7 @@ md"""
 # More challenging target functions
 ## 2-D Warped Gaussian or Banana Target
 
-The previous example was a fairly easy optimization problem.  Next, we'll explore a more challenging function that has a shallow vally that is warped into the shape of a banana.  Again, we'll start with a 2-d version, so that we can visualize it easily.
+The previous example was a fairly easy optimization problem.  Next, we'll explore a more challenging function that has a shallow valley that is warped into the shape of a banana.  Again, we'll start with a 2-d version, so that we can visualize it easily.
 """
 
 # ╔═╡ ba8665f6-883d-485d-86c1-7f42fd1df5ed
@@ -290,6 +267,23 @@ md"As before, it'll be helpful to be able to compare our results to the location
 md"""
 Now it's your turn to evaluate the gradient of the `banana_2d` function at a couple of locations.  Try using ForwardDiff's [`gradient`](https://juliadiff.org/ForwardDiff.jl/stable/user/api/#ForwardDiff.gradient) function to compute the gradient of the `banana_2d` function evaluated at the origin and at the location of the true minimum.
 """
+
+# ╔═╡ c0d077f4-ab1d-4a79-b6e2-722ddc33b141
+grad_banana_2d_at_origin = missing
+
+# ╔═╡ a1ff09d0-536b-4c1b-94a7-6caebaa45f93
+begin
+    if !@isdefined(grad_banana_2d_at_origin)
+   		var_not_defined(:grad_banana_2d_at_origin)
+    elseif ismissing(grad_banana_2d_at_origin)
+        still_missing()
+    elseif !(maximum(abs.(grad_banana_2d_at_origin.-[0.8, -6.4]))<1e-5) 
+        almost(md"Check that you're evaluating the gradient at the origin.")
+    else
+        correct()
+    end
+end
+
 
 # ╔═╡ 450d1d7b-032c-420b-8dd9-34b26daa0c3b
 grad_banana_2d_at_minimum = missing 
@@ -333,7 +327,7 @@ function banana_highd(x)
 end;
 
 # ╔═╡ 60f83c0f-0177-49a1-af98-fe3359ce1aa1
-protip(md"Using global variables likek `banana_a` and `banana_b` inside functions can have a very negative effect on performance, since the compiler can't be sure of their type at compile time.  If you are using a global variable inside a function and know the type of a global variable will be fixed, then you can use avoid the performance hit by making a [type annotation](https://docs.julialang.org/en/v1/manual/performance-tips/#Annotate-values-taken-from-untyped-locations).  The function above demosntrates this technique.")
+protip(md"Using global variables like `banana_a` and `banana_b` inside functions can have a very negative effect on performance, since the compiler can't be sure of their type at compile time.  If you are using a global variable inside a function and know the type of a global variable will be fixed, then you can use avoid the performance hit by making a [type annotation](https://docs.julialang.org/en/v1/manual/performance-tips/#Annotate-values-taken-from-untyped-locations).  The function above demonstrates this technique.")
 
 # ╔═╡ bb7c4307-2db1-4447-82a8-1ffa981144c9
 md"""
@@ -518,8 +512,6 @@ md"""
 # ╔═╡ 40f3c16f-6fa2-4e14-9e0e-c3f608d3f564
 begin
 	struct GaussianTarget
-		#μ_true::Vector{Float64}
-		#Σ_true::AbstractPDMat{Float64}
 		dist::FullNormal
 	end
 	
@@ -644,10 +636,41 @@ if !ismissing(response_1b)
 	@benchmark ForwardDiff.gradient!($result_rev,$gaussian_target_2d,$init_guess_gauss_2d)  samples=20
 end
 
+# ╔═╡ e5140102-36e7-450f-ac6d-7f32c0668b98
+if @isdefined gaussian_target_2d
+	cost_one_eval = @belapsed gaussian_target_2d(init_guess_gauss_2d) samples=20
+	cost_one_eval = (1+2)*cost_one_eval
+	cost_num_grad_str = @sprintf "%1.3g" cost_one_eval
+end
+
+# ╔═╡ 9b02c64d-bed9-4d4c-bdd8-67648dd7bfae
+if @isdefined cost_num_grad_str
+	md"""
+If you're evaluating the gradient, then the incremental cost to evaluate the function itself is very small.  For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
+"""
+end
+
+# ╔═╡ f318374c-1938-4efd-b540-f3d2afae2c70
+if @isdefined cost_num_grad_str
+	md"""
+For comparison, estimating the gradient numerically would require evaluating the function 1+(number of input parameters) times.  That would be ≃$cost_num_grad_str seconds.  For this function, computing the gradient with ForwardDiff is most efficient, so we'll stick with that option for the rest of the lab.
+"""
+end
+
 # ╔═╡ cb9de107-7a33-4a59-8296-d373024e81b6
 if !ismissing(response_1b)
 	result_rev2 = DiffResults.GradientResult(init_guess_gauss_2d)
 	@benchmark ReverseDiff.gradient!($result_rev2,$gaussian_target_2d,$init_guess_gauss_2d)  samples=20
+end
+
+# ╔═╡ 64c63760-f2d4-482a-8343-7a8d982b0844
+if @isdefined result_rev2
+	@test DiffResults.value(result_rev2) ≈ DiffResults.value(result)
+end
+
+# ╔═╡ cf37e7b2-6b3e-44aa-9665-723019f6a95c
+if @isdefined result_rev2
+	@test all(DiffResults.gradient(result_rev2).≈ DiffResults.gradient(result))
 end
 
 # ╔═╡ 3db6d059-1995-4648-a7e5-eacb40131c8a
@@ -727,23 +750,6 @@ function banana_2d(x::Vector)
 	y = [ x[1]/a, x[2]*a + a*b*(x[1]^2+a^2) ]
 	-logpdf(dist,y)
 end
-
-# ╔═╡ c0d077f4-ab1d-4a79-b6e2-722ddc33b141
-grad_banana_2d_at_origin = missing
-
-# ╔═╡ a1ff09d0-536b-4c1b-94a7-6caebaa45f93
-begin
-    if !@isdefined(grad_banana_2d_at_origin)
-   		var_not_defined(:grad_banana_2d_at_origin)
-    elseif ismissing(grad_banana_2d_at_origin)
-        still_missing()
-    elseif !(maximum(abs.(grad_banana_2d_at_origin.-[0.8, -6.4]))<1e-5) 
-        almost(md"Check that you're evaluating the gradient at the origin.")
-    else
-        correct()
-    end
-end
-
 
 # ╔═╡ 691dbb96-1348-4a63-aa2c-36c577a77f93
 "Compute location of location of minimum for 2D banana"
@@ -1905,7 +1911,7 @@ version = "0.9.1+5"
 # ╠═cb9de107-7a33-4a59-8296-d373024e81b6
 # ╠═64c63760-f2d4-482a-8343-7a8d982b0844
 # ╠═cf37e7b2-6b3e-44aa-9665-723019f6a95c
-# ╠═f318374c-1938-4efd-b540-f3d2afae2c70
+# ╟─f318374c-1938-4efd-b540-f3d2afae2c70
 # ╟─f9ce690a-fab6-40fd-b4fc-6788840dbe30
 # ╟─32801c51-156f-490d-b980-2d98e8f5be23
 # ╠═3db6d059-1995-4648-a7e5-eacb40131c8a

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.16.0
+# v0.15.1
 
 using Markdown
 using InteractiveUtils
@@ -61,7 +61,7 @@ M(t) = 2π(t-t_0) + M_0.
 ```
 Here $M_0$ is the mean anomaly at the epoch  $t_0$.
 
-High-resolution spectroscopy allows for precision *relative* radial velocity measurements.  Due to the nature of the measurement process there is an arbitrary velocity offset ($C$), a nuciance parameter.
+High-resolution spectroscopy allows for precision *relative* radial velocity measurements.  Due to the nature of the measurement process there is an arbitrary velocity offset ($C$), a nuisance parameter.
 ```math
 \mathrm{rv(t)} = \mathrm{Δrv}_b(t) + C.
 ```
@@ -72,7 +72,7 @@ md"## Statistical model"
 
 # ╔═╡ cfe8d6ad-2125-4587-af70-875e7c4c4844
 md"""
-In order to perform inference on the parameters of the physical model, we must specify a statistical model.  In Baeysian statistics, we must specify both a [likelihood](https://en.wikipedia.org/wiki/Likelihood_function) function (the probability distribution for a given set of observations for given values of the model parameters) and a [prior distribution](https://en.wikipedia.org/wiki/Prior_probability) for the model parameters (θ).  
+In order to perform inference on the parameters of the physical model, we must specify a statistical model.  In Bayesian statistics, we must specify both a [likelihood](https://en.wikipedia.org/wiki/Likelihood_function) function (the probability distribution for a given set of observations for given values of the model parameters) and a [prior distribution](https://en.wikipedia.org/wiki/Prior_probability) for the model parameters (θ).  
 		
 We will assume that each observation ($rv_i$) follows a normal distribution centered on the true radial velocity ($\mathrm{rv}(t_i)$) at time $t_i$ and that the measurement errors are independent of each other.
 ```math
@@ -257,7 +257,7 @@ It turns out that the posterior distribution that we're trying to sample from is
 
 # ╔═╡ e62067ce-dbf6-4c50-94e3-fce0b8cbef12
 md"""
-We can see that there are multiple orbital periods that might be worth exploring, but they area separated by deep valleys, where models would not fit well at all.  Strictly speaking the ideal Markov chain would repeatedly transition between orbital solutions in each of the posterior modes.  In practice, most MCMC algoritms are prone to getting stuck in one mode for difficult target densities like this one.   Therefore, we will compute new Markov chains using the same physical and statistical model, but starting from initial guesses near the posterior mode that we want to explore.
+We can see that there are multiple orbital periods that might be worth exploring, but they are separated by deep valleys, where models would not fit well at all.  Strictly speaking the ideal Markov chain would repeatedly transition between orbital solutions in each of the posterior modes.  In practice, most MCMC algoritms are prone to getting stuck in one mode for difficult target densities like this one.   Therefore, we will compute new Markov chains using the same physical and statistical model, but starting from initial guesses near the posterior mode that we want to explore.
 """
 
 # ╔═╡ dd918d00-fbe7-4bba-ad6a-e77ea0acb43a
@@ -360,37 +360,6 @@ and the observations can be modeled as the linear sum of the perturbations due t
 You'll need to choose a reasonable prior distribution for $a$.    
 """
 
-# ╔═╡ 3cfc82d6-3390-4572-b5f0-124503e2e9e0
-@model rv_kepler_model_v2(t, rv_obs, σ_obs) = begin
-	# Specify Priors
-	P ~ prior_P                  # orbital period
-	K ~ prior_K                  # RV amplitude
-	e ~ prior_e                  # orbital eccentricity
-	ω ~ Uniform(0, 2π)           # arguement of pericenter
-	M0_minus_ω ~ Uniform(0,2π)   # mean anomaly at t=0 minus ω
-	C ~ Normal(0,1000.0)         # velocity offset
-	σ_j ~ prior_jitter           # magnitude of RV jitter
-	# TODO:  Set prior for a
-
-	# Transformations to make sampling easier
-	M0 = M0_minus_ω + ω
-
-	# Reject any parameter values that are unphysical, _before_ trying 
-	# to calculate the likelihood to avoid errors/assertions
-	if !(0.0 <= e < 1.0)      
-        Turing.@addlogprob! -Inf
-        return
-    end
-	
-    # Calculate the true velocity given model parameters
-	# TODO: Update to include an acceleration
-	rv_true = calc_rv_keplerian_plus_const.(t, P,K,e,ω,M0,C)  
-	
-	# Specify model likelihood for the observations
-	σ_eff = sqrt.(σ_obs.^2 .+ σ_j.^2)
-	rv_obs ~ MvNormal(rv_true, σ_eff )
-end
-
 # ╔═╡ 5084b413-1211-490a-89d3-1cc782f1741e
 md"## Sampling from the new model"
 
@@ -398,9 +367,6 @@ md"## Sampling from the new model"
 md"""
 Since we have a new statistical model, we'll need to define a new posterior based on the new statistical model and our dataset.
 """
-
-# ╔═╡ fb2fe33c-3854-435e-b9e5-60e8531fd1f3
-posterior_2 = rv_kepler_model_v2(df.bjd.-bjd_ref,df.rv,df.σ_rv)
 
 # ╔═╡ 43177135-f859-423d-b70c-e755fdd06765
 md"""
@@ -417,11 +383,6 @@ We're you're ready to start sampling from the new posterior, check the box below
 Ready to sample from new posterior using your new model? $(@bind go_sample_posterior2 CheckBox(default=true))
 """
 
-# ╔═╡ 8ffb3e78-515b-492d-bd6f-b24eb08e93d6
-if go_sample_posterior2 && (P_guess > 0)
-	chains_posterior2 = sample(posterior_2, NUTS(), MCMCThreads(), num_steps_per_chain, num_chains; init_params = param_guess_with_acc)
-end;
-
 # ╔═╡ 13c56edd-3c1e-496e-8116-fb158dd0f133
 md"## Inspect Markov chains for generalized model"
 
@@ -429,26 +390,6 @@ md"## Inspect Markov chains for generalized model"
 md"""
 Let's inspect summary statistics and marginal distributions as we did for the previous model.
 """
-
-# ╔═╡ cd1ca1b3-a0ec-4d10-90a3-7648fe52f206
-if @isdefined chains_posterior2
-	describe(chains_posterior2)
-end
-
-# ╔═╡ 9d57a595-fad9-4263-baf4-33d4ac5209f7
-if @isdefined chains_posterior2
-md"Chain to calculate summary statistics for: $(@bind chain_id3 Slider(1:size(chains_posterior2,3);default=1))"
-end
-
-# ╔═╡ 4c05803d-3b8d-4c03-9c7a-3c589227a807
-if @isdefined chains_posterior2
-	describe(chains_posterior2[:,:,chain_id3])
-end
-
-# ╔═╡ 8a4ae52b-9cc6-478f-b836-62e59694949e
-if @isdefined chains_posterior2
-	density(chains_posterior2)
-end
 
 # ╔═╡ 21fdeaff-0c91-481c-bd8e-1dba27e275a6
 md"""
@@ -873,6 +814,65 @@ if  @isdefined chains_with_guess
 	ylabel!(plt,"RV (m/s)")
 	title!(plt,"Predicted RV curves for $n_draws random samples from\nnew Markov chains")
 
+end
+
+# ╔═╡ 3cfc82d6-3390-4572-b5f0-124503e2e9e0
+@model rv_kepler_model_v2(t, rv_obs, σ_obs) = begin
+	# Specify Priors
+	P ~ prior_P                  # orbital period
+	K ~ prior_K                  # RV amplitude
+	e ~ prior_e                  # orbital eccentricity
+	ω ~ Uniform(0, 2π)           # arguement of pericenter
+	M0_minus_ω ~ Uniform(0,2π)   # mean anomaly at t=0 minus ω
+	C ~ Normal(0,1000.0)         # velocity offset
+	σ_j ~ prior_jitter           # magnitude of RV jitter
+	# TODO:  Set prior for a
+
+	# Transformations to make sampling easier
+	M0 = M0_minus_ω + ω
+
+	# Reject any parameter values that are unphysical, _before_ trying 
+	# to calculate the likelihood to avoid errors/assertions
+	if !(0.0 <= e < 1.0)      
+        Turing.@addlogprob! -Inf
+        return
+    end
+	
+    # Calculate the true velocity given model parameters
+	# TODO: Update to include an acceleration
+	rv_true = calc_rv_keplerian_plus_const.(t, P,K,e,ω,M0,C)  
+	
+	# Specify model likelihood for the observations
+	σ_eff = sqrt.(σ_obs.^2 .+ σ_j.^2)
+	rv_obs ~ MvNormal(rv_true, σ_eff )
+end
+
+# ╔═╡ fb2fe33c-3854-435e-b9e5-60e8531fd1f3
+posterior_2 = rv_kepler_model_v2(df.bjd.-bjd_ref,df.rv,df.σ_rv)
+
+# ╔═╡ 8ffb3e78-515b-492d-bd6f-b24eb08e93d6
+if go_sample_posterior2 && (P_guess > 0)
+	chains_posterior2 = sample(posterior_2, NUTS(), MCMCThreads(), num_steps_per_chain, num_chains; init_params = param_guess_with_acc)
+end;
+
+# ╔═╡ cd1ca1b3-a0ec-4d10-90a3-7648fe52f206
+if @isdefined chains_posterior2
+	describe(chains_posterior2)
+end
+
+# ╔═╡ 9d57a595-fad9-4263-baf4-33d4ac5209f7
+if @isdefined chains_posterior2
+md"Chain to calculate summary statistics for: $(@bind chain_id3 Slider(1:size(chains_posterior2,3);default=1))"
+end
+
+# ╔═╡ 4c05803d-3b8d-4c03-9c7a-3c589227a807
+if @isdefined chains_posterior2
+	describe(chains_posterior2[:,:,chain_id3])
+end
+
+# ╔═╡ 8a4ae52b-9cc6-478f-b836-62e59694949e
+if @isdefined chains_posterior2
+	density(chains_posterior2)
 end
 
 # ╔═╡ 693cae36-613b-4c3d-b6a0-3284b1831520
