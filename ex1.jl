@@ -69,7 +69,7 @@ There are numerous optimization algorithms that are specialized for a wide varie
 
 # ╔═╡ b013cf33-c7a6-42ad-8842-aa631f86cace
 md"""
-The first algorithm we'll try is the [downhill simplex method](https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method) (sometimes referred o as the amoeba method or Nelder-Mead).  Below we call the `optimize` function, specifying the target function to be minimized, an initial guess (as a vector), and the algorithm to be used.  The `optimize` function will reture a structure that contains its estimate of the location of the minimum (the `minimizer`), the value of the function at that point (the `minimum`), and additional information such as how many function calls were used why the algorithm decided to stop its search.
+The first algorithm we'll try is the [downhill simplex method](https://en.wikipedia.org/wiki/Nelder%E2%80%93Mead_method) (sometimes referred to as the amoeba method or Nelder-Mead).  Below we call the `optimize` function, specifying the target function to be minimized, an initial guess (as a vector), and the algorithm to be used.  The `optimize` function will return a structure that contains its estimate of the location of the minimum (the `minimizer`), the value of the function at that point (the `minimum`), and additional information such as how many function calls were used and why the algorithm decided to stop its search.
 """
 
 # ╔═╡ 5ef412aa-c13b-447f-9d0a-9c6b37e8b37a
@@ -124,11 +124,26 @@ display_msg_if_fail(check_type_isa(:response_1b,response_1b,Markdown.MD))
 # ╔═╡ 7047987f-0b45-4224-8e41-fb7953ba3e6d
 md"**Nelder Mead**"
 
+# ╔═╡ b6f54005-2d6c-4629-b8f8-49ee7117d2ba
+if !ismissing(response_1b)
+	@benchmark optimize($gaussian_target_2d,$randn(2),NelderMead()) samples=100
+end
+
 # ╔═╡ 0cb98deb-8807-406f-993d-17ddeb0ff686
 md"**Gradient Descent**"
 
+# ╔═╡ 8dfc25fc-109d-4026-ac1c-3182d8ac1f81
+if !ismissing(response_1b)
+	@benchmark optimize($gaussian_target_2d,$randn(2),GradientDescent()) samples=100
+end
+
 # ╔═╡ c6b4377a-5fff-4e8b-a96f-df971a4d74f6
 md"**BFGS**"
+
+# ╔═╡ 4c4649cb-8f73-41cb-b7f9-e48f540fda7e
+if !ismissing(response_1b)
+	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS()) samples=100
+end
 
 # ╔═╡ 2b4188b3-8a1c-44a2-acdd-e8a0949e2659
 md"""
@@ -145,7 +160,7 @@ display_msg_if_fail(check_type_isa(:response_1c,response_1a,Markdown.MD))
 md"""
 In the example above, the optimize function had to estimate the gradient of our target function numerically.  We could likely improve the performance by providing a function to compute the gradient explicitly.  Alternatively, we could make use of automatic differentiation (or "autodiff"), where we let the compiler do the work of computing derivatives for us.
 
-In this case, we have a simple target function and we could compute the gradient analytically ourselfes.  However, that would require human time and we'd have to be careful not to miss a minus sine or factor of 2.  Autodiff is a particularly powerful tool when the target function is more complex and computing gradients analytically would be impractical.  
+In this case, we have a simple target function and we could compute the gradient analytically ourselves.  However, that would require human time and we'd have to be careful not to miss a minus sign or factor of 2.  Autodiff is a particularly powerful tool when the target function is more complex and computing gradients analytically would be impractical.  
 
 There are several different strategies for performing automatic differentiation.  Which is more efficient depends on the problem.  For this lab, we'll use [Foward Accumulation](https://en.wikipedia.org/wiki/Automatic_differentiation#Forward_accumulation) which is implemented by Julia's [ForwardDiff package](https://github.com/JuliaDiff/ForwardDiff.jl).  For example, we can compute the gradient with
 """
@@ -158,8 +173,18 @@ Often, the computational cost to compute the gradient is only slightly more than
 # ╔═╡ e2ba5402-9be8-4bfe-acfc-5acf4ac01ace
 md"**Evaluate function only**"
 
+# ╔═╡ b18277bd-e23c-4184-bc10-5a47d83a3df5
+if !ismissing(response_1b)
+	@benchmark gaussian_target_2d($init_guess_gauss_2d)  samples=20
+end
+
 # ╔═╡ a585d799-4c14-45e3-8250-d9a19df075b3
 md"**Evaluate gradient only**"
+
+# ╔═╡ 8aa054de-403b-47e8-9f84-73e2ca2fa4e3
+if !ismissing(response_1b)
+	@benchmark ForwardDiff.gradient($gaussian_target_2d,$init_guess_gauss_2d)  samples=20
+end
 
 # ╔═╡ 54319c3e-fed4-4184-81ce-767f9a527c1b
 md"""
@@ -187,7 +212,7 @@ The [DiffResults.jl](https://juliadiff.org/DiffResults.jl/stable/) package provi
 """
 
 # ╔═╡ f3cedf20-eda8-4bfe-a8fa-497e1cfe5dd4
-md"""It's better to use the API (as opposed to accessing the internal variables in the result of type `MutableDiffResult`), since the API is shared by other autodiff packages, such *Reverse-mode* autodiff packages like [ReveresDiff.jl](https://github.com/JuliaDiff/ReverseDiff.jl).    Thus, one can more easily try/swap out different autodiff enginges to see which works better for a particulare application. Let's compare thes two options. 
+md"""It's better to use the API (as opposed to accessing the internal variables in the result of type `MutableDiffResult`), since the API is shared by other autodiff packages, such as *Reverse-mode* autodiff packages like [ReveresDiff.jl](https://github.com/JuliaDiff/ReverseDiff.jl).    Thus, one can more easily try/swap out different autodiff engines to see which works better for a particular application. Let's compare these two options. 
 """
 
 # ╔═╡ 980e8ae8-7b6c-43cd-a217-b9de54731b6f
@@ -220,6 +245,11 @@ The number of function and gradient evaluations is probably the same as when we 
 
 # ╔═╡ 286f9794-d139-4058-9fc2-8588d9040f3f
 md"**BFGS w/ autodiff**"
+
+# ╔═╡ 2cc9be0e-4b91-4d6a-87da-ad70317c4742
+if run_benchmarks
+	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS(),autodiff=:forward) samples=20
+end
 
 # ╔═╡ f33f8dc4-df49-496b-9da9-503f4beaf1c8
 md"""
@@ -273,7 +303,7 @@ md"""
 # More challenging target functions
 ## 2-D Warped Gaussian or Banana Target
 
-The previous example was a fairly easy optimization problem.  Next, we'll explore a more challenging function that has a shallow vally that is warped into the shape of a banana.  Again, we'll start with a 2-d version, so that we can visualize it easily.
+The previous example was a fairly easy optimization problem.  Next, we'll explore a more challenging function that has a shallow valley that is warped into the shape of a banana.  Again, we'll start with a 2-d version, so that we can visualize it easily.
 """
 
 # ╔═╡ ba8665f6-883d-485d-86c1-7f42fd1df5ed
@@ -286,10 +316,30 @@ end;
 # ╔═╡ 0f06886f-8eb3-4828-b5dd-b84a4749519b
 md"As before, it'll be helpful to be able to compare our results to the location of the true minimum."
 
+# ╔═╡ 7d188cda-70c8-44b7-9773-911e5f92bb35
+true_min_banana_2d = compute_loc_min_banana_2d(banana_a,banana_b, min_prewarp_banana_2d)
+
 # ╔═╡ 66e079a4-e14e-4700-adfa-51a05a4cd07e
 md"""
 Now it's your turn to evaluate the gradient of the `banana_2d` function at a couple of locations.  Try using ForwardDiff's [`gradient`](https://juliadiff.org/ForwardDiff.jl/stable/user/api/#ForwardDiff.gradient) function to compute the gradient of the `banana_2d` function evaluated at the origin and at the location of the true minimum.
 """
+
+# ╔═╡ c0d077f4-ab1d-4a79-b6e2-722ddc33b141
+grad_banana_2d_at_origin = missing
+
+# ╔═╡ a1ff09d0-536b-4c1b-94a7-6caebaa45f93
+begin
+    if !@isdefined(grad_banana_2d_at_origin)
+   		var_not_defined(:grad_banana_2d_at_origin)
+    elseif ismissing(grad_banana_2d_at_origin)
+        still_missing()
+    elseif !(maximum(abs.(grad_banana_2d_at_origin.-[0.8, -6.4]))<1e-5) 
+        almost(md"Check that you're evaluating the gradient at the origin.")
+    else
+        correct()
+    end
+end
+
 
 # ╔═╡ 450d1d7b-032c-420b-8dd9-34b26daa0c3b
 grad_banana_2d_at_minimum = missing 
@@ -333,7 +383,7 @@ function banana_highd(x)
 end;
 
 # ╔═╡ 60f83c0f-0177-49a1-af98-fe3359ce1aa1
-protip(md"Using global variables likek `banana_a` and `banana_b` inside functions can have a very negative effect on performance, since the compiler can't be sure of their type at compile time.  If you are using a global variable inside a function and know the type of a global variable will be fixed, then you can use avoid the performance hit by making a [type annotation](https://docs.julialang.org/en/v1/manual/performance-tips/#Annotate-values-taken-from-untyped-locations).  The function above demosntrates this technique.")
+protip(md"Using global variables like `banana_a` and `banana_b` inside functions can have a very negative effect on performance, since the compiler can't be sure of their type at compile time.  If you are using a global variable inside a function and know the type of a global variable will be fixed, then you can use avoid the performance hit by making a [type annotation](https://docs.julialang.org/en/v1/manual/performance-tips/#Annotate-values-taken-from-untyped-locations).  The function above demonstrates this technique.")
 
 # ╔═╡ bb7c4307-2db1-4447-82a8-1ffa981144c9
 md"""
@@ -377,6 +427,16 @@ md"Number of dimensions for target function: $(@bind banana_nd NumberField(1:1:2
 begin 
 	init_guess_banana_nd = 5.0.*randn(banana_nd);
 end
+
+# ╔═╡ 73d84cba-c5a5-40fd-bc99-15a00570d413
+function calc_min_banana_nd(d::Integer)
+	@assert d>=2
+	true_min_banana_nd = repeat(true_min_banana_2d,floor(Int,d//2))
+	if d-length(true_min_banana_nd) == 1
+	   true_min_banana_nd = vcat(true_min_banana_nd,0.0)
+	end
+	true_min_banana_nd
+end;
 
 # ╔═╡ 997042fa-803d-49c4-9ed6-b6e0809d6cf8
 md"""
@@ -481,6 +541,28 @@ if run_benchmarks
 	xlabel!(plt,"Number of dimensions")
 	ylabel!(plt,"Runtime (s)")
 	title!(plt,"Benchmarking Algorithms for Warped Gaussian target")
+end
+
+# ╔═╡ ea622981-ebca-4407-826e-c7141562e76d
+if run_benchmarks # Evaluate accuracy of minima found 
+	local nd_list = dimen_to_benchmark_banana
+	local ref = map(d->calc_min_banana_nd(d), nd_list )
+	dist_banana_nm = map(i-> sum( (results_banana_nm_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+	dist_banana_gd = map(i-> sum( (results_banana_gd_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+	dist_banana_bfgs = map(i-> sum( (results_banana_bfgs_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+	dist_banana_bfgs_ad = map(i-> sum( (results_banana_bfgs_ad_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
+end;
+
+# ╔═╡ 140c83c4-bbe8-4ffe-b272-5edf10511456
+if run_benchmarks
+	local plt = plot(yscale=:log10, legend=:right)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_nm, label="Nelder Mean (Gradient-free)",color=:blue)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_gd, label="Gradient Descent",color=:purple)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs, label="BFGS, Numerical Gradients",color=:green)
+	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs_ad, label="BFGS, Auto-Diff Gradients",color=:red)
+	xlabel!("Number of dimensions")
+	ylabel!("Distance to true minimum")
+	title!(plt,"Accuracy of Algorithms for Banana target")
 end
 
 # ╔═╡ 1f122def-f9fb-41df-8292-c1b0c93cfb4d
@@ -601,33 +683,8 @@ result_gauss_2d_bfgs.minimizer .- mean(gaussian_target_2d)
 # ╔═╡ b075963b-79ed-49f5-8bc8-616196de8b36
 result_gauss_2d_bfgs.minimum .- gaussian_target_2d(mean(gaussian_target_2d))
 
-# ╔═╡ b6f54005-2d6c-4629-b8f8-49ee7117d2ba
-if !ismissing(response_1b)
-	@benchmark optimize($gaussian_target_2d,$randn(2),NelderMead()) samples=100
-end
-
-# ╔═╡ 8dfc25fc-109d-4026-ac1c-3182d8ac1f81
-if !ismissing(response_1b)
-	@benchmark optimize($gaussian_target_2d,$randn(2),GradientDescent()) samples=100
-end
-
-# ╔═╡ 4c4649cb-8f73-41cb-b7f9-e48f540fda7e
-if !ismissing(response_1b)
-	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS()) samples=100
-end
-
 # ╔═╡ dd3afd35-5508-48e8-b38d-a3342f32ba7c
 ForwardDiff.gradient(gaussian_target_2d,init_guess_gauss_2d)
-
-# ╔═╡ b18277bd-e23c-4184-bc10-5a47d83a3df5
-if !ismissing(response_1b)
-	@benchmark gaussian_target_2d($init_guess_gauss_2d)  samples=20
-end
-
-# ╔═╡ 8aa054de-403b-47e8-9f84-73e2ca2fa4e3
-if !ismissing(response_1b)
-	@benchmark ForwardDiff.gradient($gaussian_target_2d,$init_guess_gauss_2d)  samples=20
-end
 
 # ╔═╡ 756389e5-662b-4384-a94e-ed05c8c286f5
 begin 
@@ -652,11 +709,6 @@ end
 
 # ╔═╡ 3db6d059-1995-4648-a7e5-eacb40131c8a
 result_gauss_2d_bfgs_ad = optimize(gaussian_target_2d,init_guess_gauss_2d,BFGS(),autodiff=:forward)
-
-# ╔═╡ 2cc9be0e-4b91-4d6a-87da-ad70317c4742
-if run_benchmarks
-	@benchmark optimize($gaussian_target_2d,$randn(2),BFGS(),autodiff=:forward) samples=20
-end
 
 # ╔═╡ adcc2804-6cf9-43a9-8291-08671c64188c
 if run_benchmarks  # Code to compute benchmarks
@@ -728,34 +780,6 @@ function banana_2d(x::Vector)
 	-logpdf(dist,y)
 end
 
-# ╔═╡ c0d077f4-ab1d-4a79-b6e2-722ddc33b141
-grad_banana_2d_at_origin = missing
-
-# ╔═╡ a1ff09d0-536b-4c1b-94a7-6caebaa45f93
-begin
-    if !@isdefined(grad_banana_2d_at_origin)
-   		var_not_defined(:grad_banana_2d_at_origin)
-    elseif ismissing(grad_banana_2d_at_origin)
-        still_missing()
-    elseif !(maximum(abs.(grad_banana_2d_at_origin.-[0.8, -6.4]))<1e-5) 
-        almost(md"Check that you're evaluating the gradient at the origin.")
-    else
-        correct()
-    end
-end
-
-
-# ╔═╡ 691dbb96-1348-4a63-aa2c-36c577a77f93
-"Compute location of location of minimum for 2D banana"
-function compute_loc_min_banana_2d(a, b, min_prewarp::Vector)
-	true_min_postwarp_banana_x = min_prewarp[1]*a 
-	true_min_postwarp_banana_y = (min_prewarp[2]-a*b*(min_prewarp[1]^2+a^2))/a
-	true_min_postwarp_banana_2d = [true_min_postwarp_banana_x, true_min_postwarp_banana_y]
-end;
-
-# ╔═╡ 7d188cda-70c8-44b7-9773-911e5f92bb35
-true_min_banana_2d = compute_loc_min_banana_2d(banana_a,banana_b, min_prewarp_banana_2d)
-
 # ╔═╡ f2209d29-1c49-499f-949a-85e680559e22
 let
 	n_plt = 400
@@ -770,37 +794,13 @@ let
 	title!("Gaussian warped into a 2-D Banana")
 end
 
-# ╔═╡ 73d84cba-c5a5-40fd-bc99-15a00570d413
-function calc_min_banana_nd(d::Integer)
-	@assert d>=2
-	true_min_banana_nd = repeat(true_min_banana_2d,floor(Int,d//2))
-	if d-length(true_min_banana_nd) == 1
-	   true_min_banana_nd = vcat(true_min_banana_nd,0.0)
-	end
-	true_min_banana_nd
+# ╔═╡ 691dbb96-1348-4a63-aa2c-36c577a77f93
+"Compute location of location of minimum for 2D banana"
+function compute_loc_min_banana_2d(a, b, min_prewarp::Vector)
+	true_min_postwarp_banana_x = min_prewarp[1]*a 
+	true_min_postwarp_banana_y = (min_prewarp[2]-a*b*(min_prewarp[1]^2+a^2))/a
+	true_min_postwarp_banana_2d = [true_min_postwarp_banana_x, true_min_postwarp_banana_y]
 end;
-
-# ╔═╡ ea622981-ebca-4407-826e-c7141562e76d
-if run_benchmarks # Evaluate accuracy of minima found 
-	local nd_list = dimen_to_benchmark_banana
-	local ref = map(d->calc_min_banana_nd(d), nd_list )
-	dist_banana_nm = map(i-> sum( (results_banana_nm_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-	dist_banana_gd = map(i-> sum( (results_banana_gd_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-	dist_banana_bfgs = map(i-> sum( (results_banana_bfgs_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-	dist_banana_bfgs_ad = map(i-> sum( (results_banana_bfgs_ad_list[i].minimizer.-ref[i]).^2), 1:length(nd_list) )
-end;
-
-# ╔═╡ 140c83c4-bbe8-4ffe-b272-5edf10511456
-if run_benchmarks
-	local plt = plot(yscale=:log10, legend=:right)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_nm, label="Nelder Mean (Gradient-free)",color=:blue)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_gd, label="Gradient Descent",color=:purple)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs, label="BFGS, Numerical Gradients",color=:green)
-	scatter!(plt,dimen_to_benchmark_banana,dist_banana_bfgs_ad, label="BFGS, Auto-Diff Gradients",color=:red)
-	xlabel!("Number of dimensions")
-	ylabel!("Distance to true minimum")
-	title!(plt,"Accuracy of Algorithms for Banana target")
-end
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
@@ -1846,7 +1846,7 @@ version = "0.9.1+5"
 
 # ╔═╡ Cell order:
 # ╟─2046af3d-aea5-433c-8b70-4916a8b7ef1a
-# ╟─8b35ac88-aece-4f78-b0e7-0a03ff1fbe26
+# ╠═8b35ac88-aece-4f78-b0e7-0a03ff1fbe26
 # ╟─3daa9062-8c45-41fd-a52d-d042fd86d1b6
 # ╟─9463b61d-99e1-4542-828f-14d35f059ba8
 # ╟─c0f97de7-832d-46a0-b82d-a04c47bbafce
