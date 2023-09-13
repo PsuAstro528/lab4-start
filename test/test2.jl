@@ -1,8 +1,12 @@
 using Test #, Random
+import Pkg
+using Pluto
 
 @testset "Testing solution to Exercise 2" begin
 
 @testset "Running ex2.jl" begin
+   Pluto.activate_notebook_environment("../ex2.jl");
+   Pkg.instantiate();
    include("../ex2.jl")
 end;
 
