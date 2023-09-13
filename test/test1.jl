@@ -1,10 +1,11 @@
 using Test #, Random
-using Pkg, Pluto
+import Pkg
+using Pluto
 
 @testset "Testing solution to Exercise 1" begin
 
 @testset "Running ex1.jl" begin
-   Pluto.activate_notebook_environment("ex1.jl"); 
+   Pluto.activate_notebook_environment("../ex1.jl"); 
    Pkg.instantiate();
    include("../ex1.jl")
 end;
