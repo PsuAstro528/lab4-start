@@ -36,3 +36,8 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 [targets]
 build = ["Pkg","Pluto"]
 test = ["Pluto", "Random", "Test"]
+
+[compat]
+Pkg = "1.11.0"
+Pluto = "0.20.17"
+julia = "1.11"
